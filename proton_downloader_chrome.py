@@ -55,13 +55,10 @@ class ProtonVPN:
             self.driver.quit()
             print("WebDriver closed.")
             
-    # --- Login, Navigation methods remain the same ---
-
     def login(self, username, password):
         try:
             self.driver.get("https://protonvpn.com/")
             time.sleep(2)
-            # ... (Rest of Login logic) ...
             self.driver.find_element(By.XPATH, "//a[contains(@href, 'https://account.protonvpn.com/login')]").click()
             time.sleep(2)
             user_field = self.driver.find_element(By.ID, "username")
@@ -108,14 +105,29 @@ class ProtonVPN:
                 pass
 
             countries = self.driver.find_elements(By.CSS_SELECTOR, ".mb-6 details")
-            print(f"Found {len(countries)} countries to process.")
+            print(f"Found {len(countries)} total countries to check.")
+            
+            # --- TARGETING ONLY UNITED STATES ---
+            TARGET_COUNTRY_NAME = "United States"
+            found_target = False
 
             for country in countries:
                 try:
+                    country_name_element = country.find_element(By.CSS_SELECTOR, "summary")
+                    country_name = country_name_element.text.split('\n')[0].strip()
+                    
+                    # Skip all countries that are not the target
+                    if TARGET_COUNTRY_NAME not in country_name:
+                        print(f"Skipping country: {country_name}")
+                        continue
+                    
+                    # Target country found, proceed with download
+                    found_target = True
+                    print(f"--- Starting download for target country: {country_name} ---")
+
                     self.driver.execute_script("arguments[0].open = true;", country)
                     time.sleep(0.5)
 
-                    country_name = country.find_element(By.CSS_SELECTOR, "summary").text.split('\n')[0]
                     buttons = country.find_elements(By.CSS_SELECTOR, "tr .button")
 
                     for index, btn in enumerate(buttons):
@@ -132,19 +144,18 @@ class ProtonVPN:
                             )
                             confirm_btn.click()
 
-                            # 3. CRITICAL: Wait for the modal backdrop to disappear (Max 15 seconds)
+                            # 3. CRITICAL: Wait for the modal backdrop to disappear 
                             WebDriverWait(self.driver, 15).until(
                                 EC.invisibility_of_element_located(MODAL_BACKDROP_SELECTOR)
                             )
                             
                             print(f"Successfully downloaded config {index + 1} for {country_name}.")
 
-                            # 4. CRITICAL: Increased delay to 15 seconds to prevent rate limiting/race conditions
+                            # 4. Increased delay to prevent rate limiting/race conditions
                             time.sleep(15) 
 
                         except (TimeoutException, ElementClickInterceptedException) as e:
                             print(f"Error downloading file {index + 1} for {country_name}. Timeout or Interception. Retrying cleanup... Error: {e}")
-                            # Attempt to ensure the backdrop is cleared before continuing
                             try:
                                 WebDriverWait(self.driver, 5).until(
                                     EC.invisibility_of_element_located(MODAL_BACKDROP_SELECTOR)
@@ -152,7 +163,6 @@ class ProtonVPN:
                             except:
                                 print("Warning: Backdrop cleanup failed, continuing anyway.")
                             
-                            # Massive wait for server recovery
                             time.sleep(30)
                             continue
                         
@@ -165,6 +175,9 @@ class ProtonVPN:
                     print(f"Error processing country block: {e}")
                     continue
 
+            if not found_target:
+                print(f"Warning: The target country '{TARGET_COUNTRY_NAME}' was not found on the page or download loop was skipped.")
+
             return True
 
         except Exception as e:
@@ -172,7 +185,6 @@ class ProtonVPN:
             return False
 
     def logout(self):
-        # ... (Logout logic remains the same) ...
         try:
             self.driver.find_element(By.CSS_SELECTOR, ".p-1").click()
             time.sleep(1)
