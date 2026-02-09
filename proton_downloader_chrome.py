@@ -221,12 +221,12 @@ class ProtonVPN:
         # 3. Send to Telegram (English Caption)
         if TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID:
             caption = (
-                f"✅ **New ProtonVPN WireGuard Bundle**\n\n"
-                f"📂 **Structure:** Organized by Country Folders\n"
-                f"🌍 **Countries:** {len(wg_files)}\n"
-                f"📄 **Total Files:** {total_files}\n"
-                f"ℹ️ **Format:** .conf (Windows/Router/Clients)\n\n"
-                f"🔹 Files are sorted into folders inside the ZIP."
+                f"**New ProtonVPN WireGuard**\n\n"
+                f"Organized by Country Folders\n"
+                f"**Countries:** {len(wg_files)}\n"
+                f"**Total Files:** {total_files}\n"
+                f"**Format:** .conf (Windows)\n\n"
+                f"Files are sorted into folders inside the ZIP."
             )
             
             try:
